@@ -2,6 +2,8 @@ import numpy as np
 from .data_utils import read_gen_sparse
 from ..utils.sparse import normalize, binarize, frequency
 import os
+from scipy.sparse import csr_matrix
+import scipy
 
 
 class LabelsBase(object):
@@ -42,7 +44,8 @@ class LabelsBase(object):
         return self.Y[:, indices] if self._valid else None
 
     def normalize(self, norm='max', copy=False):
-        self.Y = normalize(self.Y, copy=copy, norm=norm) if self._valid else None
+        self.Y = normalize(self.Y, copy=copy,
+                           norm=norm) if self._valid else None
 
     def load(self, data_dir, fname, Y):
         if Y is not None:
@@ -51,7 +54,14 @@ class LabelsBase(object):
             return None
         else:
             fname = os.path.join(data_dir, fname)
-            return read_gen_sparse(fname)
+            if fname[-3:] == 'npz':
+                print('npz was chosen')
+                return scipy.sparse.load_npz(os.path.join(data_dir, fname))
+
+            elif fname[-3:] == 'npy':
+                return csr_matrix(np.load(os.path.join(data_dir, fname)))
+            else:
+                return read_gen_sparse(fname)
 
     def get_invalid_indices(self, axis=0):
         """

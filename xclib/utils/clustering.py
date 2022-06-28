@@ -170,7 +170,7 @@ def _sdist(XA, XB, metric, norm=None):
 
 
 def cluster_balance(X, clusters, num_clusters, splitter,
-                    num_threads=5, verbose=True, use_sth_till=-1):
+                    num_threads=0, verbose=True, use_sth_till=-1):
     """
     Cluster given data using 2-Means++ algorithm
     Arguments:
@@ -201,26 +201,35 @@ def cluster_balance(X, clusters, num_clusters, splitter,
         return 2**int(math.ceil(math.log(x) / math.log(2)))
 
     def _print_stats(x):
-        print(f"Total clusters {len(x)}" \
-            f" Avg. Cluster size {np.mean(list(map(len, x)))}")
+        print(f"Total clusters {len(x)}"
+              f" Avg. Cluster size {np.mean(list(map(len, x)))}")
 
     num_clusters = _nearest_two_power(num_clusters)
+    # use_sth_till = num_clusters
 
-    while len(clusters) < use_sth_till:
+    # while len(clusters) < num_clusters:
+    #     temp = []
+    #     temp_cluster_list = [splitter(X[x], x) for x in clusters]
+    #     x = list(itertools.chain(*temp_cluster_list))
+    #     for listy in x:
+    #         temp.append(listy)
+    #     clusters = temp
+
+    #     # clusters = list(itertools.chain(*temp_cluster_list))
+    #     if verbose:
+    #         _print_stats(clusters)
+    # del temp_cluster_list
+
+    # with Parallel(n_jobs=num_threads, prefer="threads") as parallel:
+    while len(clusters) < 2282:
+        temp = []
         temp_cluster_list = [splitter(X[x], x) for x in clusters]
-        clusters = list(itertools.chain(*temp_cluster_list))
+        x = list(itertools.chain(*temp_cluster_list))
+        for listy in x:
+            temp.append(listy)
+        clusters = temp
         if verbose:
             _print_stats(clusters)
-        del temp_cluster_list
-
-    with Parallel(n_jobs=num_threads, prefer="threads") as parallel:
-        while len(clusters) < num_clusters:
-            temp_cluster_list = parallel(
-                delayed(splitter)(X[x], x) for x in clusters)
-            clusters = list(itertools.chain(*temp_cluster_list))
-            if verbose:
-                _print_stats(clusters)
-            del temp_cluster_list
     mapping = np.zeros(X.shape[0], dtype=np.int64)
     for idx, item in enumerate(clusters):
         for _item in item:

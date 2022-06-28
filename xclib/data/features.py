@@ -1,5 +1,7 @@
 from sklearn.preprocessing import normalize as scale
 import numpy as np
+import scipy
+from scipy.sparse import csr_matrix
 import os
 from . import data_utils
 
@@ -150,7 +152,7 @@ class DenseFeatures(FeaturesBase):
 
 class SparseFeatures(FeaturesBase):
     """Class for sparse features
-    
+
     Arguments
     ----------
     data_dir: str
@@ -174,7 +176,12 @@ class SparseFeatures(FeaturesBase):
         else:
             assert fname is not None, "Filename can not be None."
             fname = os.path.join(data_dir, fname)
-            return data_utils.read_gen_sparse(fname)
+            if fname[-3:] == 'npz':
+                return scipy.sparse.load_npz(os.path.join(data_dir, fname))
+            elif fname[-3:] == 'npy':
+                return csr_matrix(np.load(os.path.join(data_dir, fname)))
+            else:
+                return data_utils.read_gen_sparse(fname)
 
     def normalize(self, norm='l2', copy=False):
         self.X = scale(self.X, copy=copy, norm=norm)
